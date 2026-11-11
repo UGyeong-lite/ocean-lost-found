@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { LostItem } from '../types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://eqvxmopgyeloclytfcux.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxdnhtb3BneWVsb2NlyXRmY3V4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzNzIwMzcsImV4cCI6MjEwOTk0ODAzN30.3_SstPDQIj_e6pNiYDVE4P_J64C0Um7_g1Ts0aJP-E8';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_QLTpEynjZTcEnw5eACTK3w_zNm8jZQq';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
