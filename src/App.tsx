@@ -6,7 +6,7 @@ import type { LostItem } from './types';
 import { CATEGORIES } from './types';
 import { TeacherUploadModal } from './components/TeacherUploadModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
-import mobileQr from './mobile-qr.png';
+import mobileQr from './mobile-qr.png?inline';
 
 export default function App() {
   const [items, setItems] = useState<LostItem[]>([]);
