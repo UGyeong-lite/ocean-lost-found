@@ -5,8 +5,13 @@
 이 폴더에서 `npm install` 후 `npm run dev`를 실행하세요. `npm run build`는 GitHub Pages에 공개할 파일을 `docs/`에 만듭니다. 이 폴더를 포함해 커밋하고 `main` 브랜치에 푸시하면 사이트가 갱신됩니다.
 
 사이트: https://ugyeong-lite.github.io/ocean-lost-found/
+구글 웹앱(QR 접속): https://script.google.com/macros/s/AKfycbz-fi5TQTTd7KxrSS02M0BSsQAgYr1FPwapwu3DW2GfUNPFLryCWZVTuBSUvRvVOHzq/exec
 
 휴대폰에서 위 HTTPS 주소를 열어 사진 촬영과 분실물 확인을 할 수 있습니다. 별도 앱 설치는 필요하지 않습니다.
+
+### Firebase Hosting 추가 배포
+
+Google 계정으로 `npx firebase-tools login` 후 `npx firebase-tools projects:list`로 프로젝트를 확인하세요. 선택한 Firebase Hosting 사이트에 기존 콘텐츠가 없는지 확인한 다음 `npm run build:firebase`와 `npx firebase-tools deploy --only hosting --project 프로젝트ID`를 실행합니다. Firebase용 빌드는 `firebase-dist/`에 별도로 만들어져 GitHub Pages의 `docs/` 빌드를 변경하지 않습니다.
 
 ## 교사 코드
 
