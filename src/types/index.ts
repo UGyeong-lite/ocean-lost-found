@@ -19,7 +19,6 @@ export const CATEGORIES = [
   { id: '전자기기', label: '전자기기', icon: 'Smartphone' },
   { id: '의류/잡화', label: '의류/잡화', icon: 'Shirt' },
   { id: '학용품/도서', label: '학용품/도서', icon: 'BookOpen' },
-  { id: '지갑/카드', label: '지갑/카드', icon: 'CreditCard' },
   { id: '기타', label: '기타 물품', icon: 'Box' },
 ] as const;
 

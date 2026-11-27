@@ -9,7 +9,8 @@ import {
   User, 
   Loader2, 
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert
 } from 'lucide-react';
 import { CATEGORIES, DEFAULT_OFFICES, type LostItem } from '../types';
 import { createItemWithCode } from '../lib/supabase';
@@ -40,6 +41,10 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Two-step upload privacy confirmation state
+  const [showPrivacyConfirm, setShowPrivacyConfirm] = useState(false);
+  const [privacyConfirmed, setPrivacyConfirmed] = useState(false);
+
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +71,8 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
 
   const effectiveOffice = officeSelect;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1: Validate form and open warning confirmation instead of uploading immediately
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -85,6 +91,15 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
       return;
     }
 
+    setPrivacyConfirmed(false);
+    setShowPrivacyConfirm(true);
+  };
+
+  // Step 2: Execute actual upload only after teacher checks "예"
+  const handleConfirmUpload = async () => {
+    if (!privacyConfirmed || !imageFile) return;
+    setErrorMsg(null);
+
     try {
       setIsSubmitting(true);
 
@@ -99,10 +114,13 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
         finder_info: finderInfo.trim(),
       }, imageFile);
 
+      setShowPrivacyConfirm(false);
+      setPrivacyConfirmed(false);
       onSuccess(newItem);
       onClose();
     } catch (err: unknown) {
       console.error(err);
+      setShowPrivacyConfirm(false);
       setErrorMsg(err instanceof Error ? err.message : '분실물 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setIsSubmitting(false);
@@ -144,7 +162,7 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-5 flex-1">
+        <form onSubmit={handleFormSubmit} className="overflow-y-auto p-6 space-y-5 flex-1">
           
           {errorMsg && (
             <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm flex items-center gap-2">
@@ -160,7 +178,6 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
             </label>
 
             {/* Hidden native inputs */}
-            {/* Camera input with capture="environment" for phone rear camera */}
             <input
               type="file"
               accept="image/*"
@@ -169,7 +186,6 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
               className="hidden"
               onChange={(e) => handleImageChange(e.target.files?.[0])}
             />
-            {/* File gallery input */}
             <input
               type="file"
               accept="image/*"
@@ -204,7 +220,6 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {/* Direct Camera Button */}
                 <button
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
@@ -217,7 +232,6 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
                   <span className="text-[10px] text-sky-500">스마트폰 카메라 구동</span>
                 </button>
 
-                {/* File Upload Button */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -253,7 +267,7 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
             <label className="block text-xs font-bold text-slate-700">
               카테고리 <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
                 <button
                   key={cat.id}
@@ -271,7 +285,7 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
             </div>
           </div>
 
-          {/* 4. CRITICAL: Storage Office (보관하고 있는 교무실) */}
+          {/* 4. Storage Office */}
           <div className="rounded-2xl bg-sky-50/70 border border-sky-200 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-sky-600" />
@@ -374,21 +388,97 @@ export const TeacherUploadModal: React.FC<TeacherUploadModalProps> = ({
               disabled={isSubmitting}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-sky-600/30 flex items-center gap-2 transition active:scale-95 disabled:opacity-50"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>사진 업로드 및 등록 중...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  <span>분실물 등록 완료</span>
-                </>
-              )}
+              <CheckCircle className="w-4 h-4" />
+              <span>업로드</span>
             </button>
           </div>
 
         </form>
+
+        {/* Step 2: Privacy & Policy Warning Overlay */}
+        {showPrivacyConfirm && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="privacy-warning-title"
+            className="absolute inset-0 z-20 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+          >
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-amber-200 p-6 space-y-5">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-700 shrink-0">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 id="privacy-warning-title" className="text-base sm:text-lg font-black text-slate-900">
+                    업로드 전 필수 확인 안내
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    학생 개인정보 보호를 위해 아래 내용을 반드시 확인해 주세요.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-rose-50 border border-rose-200 p-4 text-xs sm:text-sm text-rose-900 leading-relaxed font-semibold space-y-1.5">
+                <p>
+                  ⚠️ <strong>돈, 지갑, 카드</strong>는 개인정보가 포함되어 있어 분실물로 사이트에 올릴 수 없습니다.
+                </p>
+                <p>
+                  해당 물품은 업로드하지 마시고 <strong>교내 메신저를 통해 안내</strong>해 주세요.
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-3">
+                <p className="text-sm font-extrabold text-slate-900">
+                  학생의 이름이나 개인정보가 나와있지 않나요?
+                </p>
+                <label className="flex items-center gap-2.5 cursor-pointer select-none rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 hover:border-sky-500 transition">
+                  <input
+                    type="checkbox"
+                    checked={privacyConfirmed}
+                    onChange={(e) => setPrivacyConfirmed(e.target.checked)}
+                    disabled={isSubmitting}
+                    className="h-4 w-4 rounded accent-sky-600 cursor-pointer"
+                  />
+                  <span className="text-sm font-bold text-slate-800">
+                    예
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    (사진·내용에 개인정보 및 돈·지갑·카드 없음)
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacyConfirm(false)}
+                  disabled={isSubmitting}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition"
+                >
+                  돌아가기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmUpload()}
+                  disabled={!privacyConfirmed || isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-sky-600/30 flex items-center gap-2 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>업로드 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>확인 후 업로드</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 

@@ -6,7 +6,7 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const offices = ['1층 본교무실', '2A', '2B', '3A', '3B', '4A', '4B'];
-const categories = ['전자기기', '의류/잡화', '학용품/도서', '지갑/카드', '기타'];
+const categories = ['전자기기', '의류/잡화', '학용품/도서', '기타'];
 const response = (message: string, status: number, extra = {}) =>
   new Response(JSON.stringify({ message, ...extra }), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
@@ -41,6 +41,7 @@ Deno.serve(async (request: Request) => {
       const description = String(get('description') || '').trim();
       const finder = String(get('finder_info') || '').trim();
       const mimeExtensions: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+      if (category === '지갑/카드') return response('돈, 지갑, 카드는 개인정보 보호를 위해 분실물로 올릴 수 없습니다. 교내 메신저를 통해 안내해 주세요.', 400);
       if (!(file instanceof File) || !file.size || file.size > 10 * 1024 * 1024 || !mimeExtensions[file.type] || !title || title.length > 200 || !offices.includes(office) || !categories.includes(category) || !/^\d{4}-\d{2}-\d{2}$/.test(foundDate) || location.length > 200 || description.length > 2000 || finder.length > 200) return response('사진 또는 분실물 정보를 확인해 주세요. 사진은 JPG, PNG, WebP 또는 GIF 형식으로 10MB 이하여야 합니다.', 400);
       const path = `items/${crypto.randomUUID()}.${mimeExtensions[file.type]}`;
       const { error: uploadError } = await admin.storage.from('lost_and_found').upload(path, file, { contentType: file.type, upsert: false });
